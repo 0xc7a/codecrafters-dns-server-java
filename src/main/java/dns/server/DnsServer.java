@@ -1,6 +1,7 @@
 package dns.server;
 
 import dns.env.Environment;
+import dns.reply.DnsReply;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -14,13 +15,14 @@ public final class DnsServer {
     public void start() {
         try (DatagramSocket serverSocket = new DatagramSocket(Environment.PORT)) {
             while (true) {
-                final byte[] requestBuffer = new byte[512];
+                final byte[] requestBuffer = new byte[Environment.BUFFER_SIZE];
                 final DatagramPacket request = new DatagramPacket(requestBuffer, requestBuffer.length);
                 serverSocket.receive(request);
                 System.out.println("Received data");
 
-                final byte[] responseBuffer = new byte[512];
-                final DatagramPacket response = new DatagramPacket(responseBuffer, responseBuffer.length, request.getSocketAddress());
+                DnsReply dnsReply = new DnsReply();
+                byte[] reply = dnsReply.getReply();
+                final DatagramPacket response = new DatagramPacket(reply, reply.length, request.getSocketAddress());
                 serverSocket.send(response);
             }
         } catch (IOException e) {
