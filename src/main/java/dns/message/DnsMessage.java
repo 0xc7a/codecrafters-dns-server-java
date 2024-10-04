@@ -11,18 +11,28 @@ import java.nio.ByteBuffer;
 public class DnsMessage {
 
     public byte[] getMessage() {
+        DnsAnswer answer = DnsAnswer.builder()
+                .withName("codecrafters.io")
+                .forDnsType(DnsType.A)
+                .forDnsClass(DnsClass.IN)
+                .withTTL(42)
+                .withData("8.8.8.8")
+                .build();
+
         DnsQuestion question = new DnsQuestion("codecrafters.io", DnsType.A, DnsClass.IN);
 
         DnsHeader header = DnsHeader.builder()
                 .withIdentifier((short) 1234)
                 .forQRIndicator(DnsPacketIndicator.RESPONSE)
                 .withQuestionCount((short) 1)
+                .withAnswerRecordsCount((short) 1)
                 .build();
 
         return ByteBuffer
                 .allocate(Environment.BUFFER_SIZE)
                 .put(header.getHeader())
                 .put(question.getQuestion())
+                .put(answer.getAnswer())
                 .array();
     }
 
