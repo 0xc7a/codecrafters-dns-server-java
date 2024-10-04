@@ -1,7 +1,7 @@
 package dns.server;
 
 import dns.env.Environment;
-import dns.reply.DnsReply;
+import dns.message.DnsMessage;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -20,8 +20,8 @@ public final class DnsServer {
                 serverSocket.receive(request);
                 System.out.println("Received data");
 
-                DnsReply dnsReply = new DnsReply();
-                byte[] reply = dnsReply.getReply();
+                DnsMessage message = new DnsMessage();
+                byte[] reply = message.getMessage();
                 final DatagramPacket response = new DatagramPacket(reply, reply.length, request.getSocketAddress());
                 serverSocket.send(response);
             }
