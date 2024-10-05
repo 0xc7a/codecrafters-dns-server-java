@@ -2,16 +2,13 @@ package dns.message;
 
 import dns.env.DnsClass;
 import dns.env.DnsType;
-import dns.env.Environment;
 import dns.util.Validator;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Objects;
 
 // https://www.rfc-editor.org/rfc/rfc1035#section-3.2.1
-public class DnsAnswer {
+public class DnsAnswer implements DnsRecord {
 
     private final List<DnsLabel> labels;
     private final DnsType dnsType;
@@ -35,31 +32,24 @@ public class DnsAnswer {
         this.data = Validator.validateIPv4(builder.data);
     }
 
-    public byte[] getAnswer() {
-        List<byte[]> labelsList = labels.stream().map(DnsLabel::getLabel).toList();
+    public List<DnsLabel> getLabels() {
+        return labels;
+    }
 
-        int size = labelsList.stream().mapToInt(l -> l.length).sum()
-                + 1 /* null byte */
-                + DnsType.TYPE_SIZE_BYTES
-                + DnsClass.CLASS_SIZE_BYTES
-                + 4 /* ttl */
-                + 2 /* rdlength */
-                + 4; /* rdata */
+    public DnsType getDnsType() {
+        return dnsType;
+    }
 
-        ByteBuffer buffer = ByteBuffer
-                .allocate(size)
-                .order(ByteOrder.BIG_ENDIAN);
+    public DnsClass getDnsClass() {
+        return dnsClass;
+    }
 
-        labelsList.forEach(buffer::put);
+    public int getTtl() {
+        return ttl;
+    }
 
-        return buffer
-                .put(Environment.NULL_BYTE)
-                .putShort(dnsType.getValue())
-                .putShort(dnsClass.getValue())
-                .putInt(ttl)
-                .putShort((short) data.length)
-                .put(data)
-                .array();
+    public byte[] getData() {
+        return data;
     }
 
     public static Builder builder() {
@@ -105,5 +95,14 @@ public class DnsAnswer {
 
     }
 
+    public static DnsAnswer sampleDnsAnswer() {
+        return DnsAnswer.builder()
+                .withName("codecrafters.io")
+                .forDnsType(DnsType.A)
+                .forDnsClass(DnsClass.IN)
+                .withTTL(42)
+                .withData("8.8.8.8")
+                .build();
+    }
 
 }

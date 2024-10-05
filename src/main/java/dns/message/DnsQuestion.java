@@ -2,15 +2,12 @@ package dns.message;
 
 import dns.env.DnsClass;
 import dns.env.DnsType;
-import dns.env.Environment;
 import dns.util.Validator;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Objects;
 
-public class DnsQuestion {
+public class DnsQuestion implements DnsRecord {
 
     private final List<DnsLabel> labels;
     private final DnsType dnsType;
@@ -26,25 +23,20 @@ public class DnsQuestion {
         this.dnsClass = dnsClass;
     }
 
-    public byte[] getQuestion() {
-        List<byte[]> labelsList = labels.stream().map(DnsLabel::getLabel).toList();
+    public List<DnsLabel> getLabels() {
+        return labels;
+    }
 
-        int size = labelsList.stream().mapToInt(l -> l.length).sum()
-                + 1 /* null byte */
-                + DnsType.TYPE_SIZE_BYTES
-                + DnsClass.CLASS_SIZE_BYTES;
+    public DnsType getDnsType() {
+        return dnsType;
+    }
 
-        ByteBuffer buffer = ByteBuffer
-                .allocate(size)
-                .order(ByteOrder.BIG_ENDIAN);
+    public DnsClass getDnsClass() {
+        return dnsClass;
+    }
 
-        labelsList.forEach(buffer::put);
-
-        return buffer
-                .put(Environment.NULL_BYTE)
-                .putShort(dnsType.getValue())
-                .putShort(dnsClass.getValue())
-                .array();
+    public static DnsQuestion sampleDnsQuestion() {
+        return new DnsQuestion("codecrafters.io", DnsType.A, DnsClass.IN);
     }
 
 }

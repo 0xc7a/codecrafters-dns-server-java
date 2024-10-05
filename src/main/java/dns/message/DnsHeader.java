@@ -2,14 +2,19 @@ package dns.message;
 
 import dns.env.DnsPacketIndicator;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Objects;
 
 // https://www.rfc-editor.org/rfc/rfc1035#section-4.1.1
-public class DnsHeader {
+public class DnsHeader implements DnsRecord {
 
-    private static final int HEADER_SIZE_BYTES = 12;
+    public static final int HEADER_SIZE_BYTES = 12;
+
+    public static final short FLAG_MASK_QR_INDICATOR = (short) 0x8000;
+    public static final short FLAG_MASK_AUTHORITATIVE = (short) 0x400;
+    public static final short FLAG_MASK_TRUNCATED = (short) 0x200;
+    public static final short FLAG_MASK_RECURSION_DESIRED = (short) 0x100;
+    public static final short FLAG_MASK_RECURSION_AVAILABLE = (short) 0x80;
+    public static final short FLAG_MASK_CODE = (short) 0x0F;
 
     private final short identifier; // Packet Identifier (ID) - 16 bits
     private final DnsPacketIndicator qrIndicator; // Query/Response Indicator (QR) - 1 bit
@@ -41,47 +46,52 @@ public class DnsHeader {
         this.additionalRecordsCount = builder.additionalRecordsCount;
     }
 
-    public byte[] getHeader() {
-        return ByteBuffer
-                .allocate(HEADER_SIZE_BYTES)
-                .order(ByteOrder.BIG_ENDIAN)
-                .putShort(identifier)
-                .putShort(getFlags())
-                .putShort(questionCount)
-                .putShort(answerRecordsCount)
-                .putShort(authorityRecordsCount)
-                .putShort(additionalRecordsCount)
-                .array();
+    public short getIdentifier() {
+        return identifier;
     }
 
-    private short getFlags() {
-        short flags = 0;
+    public DnsPacketIndicator getQrIndicator() {
+        return qrIndicator;
+    }
 
-        if (qrIndicator == DnsPacketIndicator.RESPONSE) {
-            flags ^= (short) 0x8000;
-        }
+    public byte getOperationCode() {
+        return operationCode;
+    }
 
-        flags ^= (short) ((operationCode & 0x0F) << 11);
+    public boolean isAuthoritative() {
+        return isAuthoritative;
+    }
 
-        if (isAuthoritative) {
-            flags ^= (short) 0x400;
-        }
+    public boolean isTruncated() {
+        return isTruncated;
+    }
 
-        if (isTruncated) {
-            flags ^= (short) 0x200;
-        }
+    public boolean isRecursionDesired() {
+        return isRecursionDesired;
+    }
 
-        if (isRecursionDesired) {
-            flags ^= (short) 0x100;
-        }
+    public boolean isRecursionAvailable() {
+        return isRecursionAvailable;
+    }
 
-        if (isRecursionAvailable) {
-            flags ^= (short) 0x80;
-        }
+    public byte getResponseCode() {
+        return responseCode;
+    }
 
-        flags ^= (short) (responseCode & 0x0F);
+    public short getQuestionCount() {
+        return questionCount;
+    }
 
-        return flags;
+    public short getAnswerRecordsCount() {
+        return answerRecordsCount;
+    }
+
+    public short getAuthorityRecordsCount() {
+        return authorityRecordsCount;
+    }
+
+    public short getAdditionalRecordsCount() {
+        return additionalRecordsCount;
     }
 
     public static DnsHeader.Builder builder() {
@@ -108,7 +118,7 @@ public class DnsHeader {
             return this;
         }
 
-        public Builder forQRIndicator(DnsPacketIndicator qrIndicator) {
+        public Builder withQRIndicator(DnsPacketIndicator qrIndicator) {
             this.qrIndicator = qrIndicator;
             return this;
         }
@@ -167,6 +177,15 @@ public class DnsHeader {
             return new DnsHeader(this);
         }
 
+    }
+
+    public static DnsHeader sampleDnsHeader() {
+        return DnsHeader.builder()
+                .withIdentifier((short) 1234)
+                .withQRIndicator(DnsPacketIndicator.RESPONSE)
+                .withQuestionCount((short) 1)
+                .withAnswerRecordsCount((short) 1)
+                .build();
     }
 
 }
