@@ -9,6 +9,7 @@ import java.util.Objects;
 
 public class DnsQuestion implements DnsRecord {
 
+    private final String name;
     private final List<DnsLabel> labels;
     private final DnsType dnsType;
     private final DnsClass dnsClass;
@@ -18,9 +19,14 @@ public class DnsQuestion implements DnsRecord {
         Objects.requireNonNull(dnsType, "Type must not be null.");
         Objects.requireNonNull(dnsClass, "Class must not be null.");
 
+        this.name = name;
         this.labels = Validator.validateDomain(name).stream().map(DnsLabel::new).toList();
         this.dnsType = dnsType;
         this.dnsClass = dnsClass;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public List<DnsLabel> getLabels() {

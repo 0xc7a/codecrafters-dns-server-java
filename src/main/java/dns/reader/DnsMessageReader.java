@@ -18,6 +18,9 @@ public class DnsMessageReader extends Reader<DnsMessage> {
         DnsHeaderReader headerReader = new DnsHeaderReader(buffer.slice(0, DnsHeader.HEADER_SIZE_BYTES));
         message.withHeader(headerReader.read());
 
+        DnsQuestionReader questionReader = new DnsQuestionReader(buffer.slice(DnsHeader.HEADER_SIZE_BYTES, buffer.limit() - DnsHeader.HEADER_SIZE_BYTES));
+        message.withQuestion(questionReader.read());
+
         return message.build();
     }
 
