@@ -29,6 +29,7 @@ public class DnsHeaderReader extends Reader<DnsHeader> {
         header.withAnswerRecordsCount(buffer.getShort(6));
         header.withAuthorityRecordsCount(buffer.getShort(8));
         header.withAdditionalRecordsCount(buffer.getShort(10));
+        this.bufferPosition = 12;
         return header.build();
     }
 

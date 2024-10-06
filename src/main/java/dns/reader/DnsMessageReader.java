@@ -2,6 +2,7 @@ package dns.reader;
 
 import dns.message.DnsHeader;
 import dns.message.DnsMessage;
+import dns.message.DnsQuestion;
 
 import java.nio.ByteBuffer;
 
@@ -15,11 +16,19 @@ public class DnsMessageReader extends Reader<DnsMessage> {
     public DnsMessage read() {
         DnsMessage.Builder message = DnsMessage.builder();
 
-        DnsHeaderReader headerReader = new DnsHeaderReader(buffer.slice(0, DnsHeader.HEADER_SIZE_BYTES));
-        message.withHeader(headerReader.read());
+        int index = 0;
 
-        DnsQuestionReader questionReader = new DnsQuestionReader(buffer.slice(DnsHeader.HEADER_SIZE_BYTES, buffer.limit() - DnsHeader.HEADER_SIZE_BYTES));
-        message.withQuestion(questionReader.read());
+        DnsHeaderReader headerReader = new DnsHeaderReader(buffer.slice(index, DnsHeader.HEADER_SIZE_BYTES));
+        DnsHeader header = headerReader.read();
+        message.withHeader(header);
+
+        index += headerReader.bufferPosition;
+
+        DnsQuestionsReader questionsReader = new DnsQuestionsReader(buffer.slice(index, buffer.limit() - index), header.getQuestionCount());
+        DnsQuestion[] questions = questionsReader.read();
+        message.withQuestions(questions);
+
+        index += questionsReader.bufferPosition;
 
         return message.build();
     }

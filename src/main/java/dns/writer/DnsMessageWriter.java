@@ -15,8 +15,8 @@ public class DnsMessageWriter extends Writer<DnsMessage> {
     public byte[] write() {
         ByteBuffer buffer = ByteBuffer.allocate(Environment.BUFFER_SIZE);
         WriterFactory.write(data.getHeader()).ifPresent(buffer::put);
-        WriterFactory.write(data.getQuestion()).ifPresent(buffer::put);
-        WriterFactory.write(data.getAnswer()).ifPresent(buffer::put);
+        data.getQuestions().forEach(question -> WriterFactory.write(question).ifPresent(buffer::put));
+        data.getAnswers().forEach(answer -> WriterFactory.write(answer).ifPresent(buffer::put));
         return buffer.array();
     }
 

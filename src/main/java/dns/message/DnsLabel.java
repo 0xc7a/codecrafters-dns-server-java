@@ -4,10 +4,27 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public record DnsLabel(String content) {
+public class DnsLabel {
 
-    public DnsLabel {
+    private final String content;
+    private int index;
+
+    public DnsLabel(String content) {
         Objects.requireNonNull(content, "Content must not be null.");
+        this.content = content;
+    }
+
+    public DnsLabel(String content, int index) {
+        this(content);
+        this.index = index;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     public byte[] getLabel() {

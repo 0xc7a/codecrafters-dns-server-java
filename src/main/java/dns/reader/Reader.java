@@ -1,12 +1,12 @@
 package dns.reader;
 
-import dns.message.DnsRecord;
-
 import java.nio.ByteBuffer;
 
-public abstract class Reader<T extends DnsRecord> {
+public abstract class Reader<T> {
 
     protected ByteBuffer buffer;
+
+    protected int bufferPosition;
 
     public abstract T read();
 

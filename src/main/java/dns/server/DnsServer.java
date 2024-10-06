@@ -13,6 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 
 public final class DnsServer {
 
@@ -29,7 +30,7 @@ public final class DnsServer {
                 DnsMessage requestMessage = readRequest(requestBuffer);
 
                 DnsMessage replyMessage = buildReply(requestMessage);
-                byte[] reply = WriterFactory.write(replyMessage).orElseGet(() -> new byte[Environment.BUFFER_SIZE]);
+                final byte[] reply = WriterFactory.write(replyMessage).orElseGet(() -> new byte[Environment.BUFFER_SIZE]);
                 final DatagramPacket response = new DatagramPacket(reply, reply.length, request.getSocketAddress());
                 serverSocket.send(response);
             }
@@ -44,15 +45,17 @@ public final class DnsServer {
     }
 
     private DnsMessage buildReply(DnsMessage request) {
-        DnsQuestion question = request.getQuestion();
+        List<DnsQuestion> questions = request.getQuestions();
 
-        DnsAnswer answer = DnsAnswer.builder()
-                .withName(question.getName())
-                .forDnsType(DnsType.A)
-                .forDnsClass(DnsClass.IN)
-                .withTTL(42)
-                .withData("8.8.8.8")
-                .build();
+        List<DnsAnswer> answers = questions.stream()
+                .map(question -> DnsAnswer.builder()
+                        .withName(question.getName())
+                        .forDnsType(DnsType.A)
+                        .forDnsClass(DnsClass.IN)
+                        .withTTL(42)
+                        .withData("8.8.8.8")
+                        .build())
+                .toList();
 
         DnsHeader header = DnsHeader.builder()
                 .withIdentifier(request.getHeader().getIdentifier())
@@ -63,14 +66,14 @@ public final class DnsServer {
                 .isRecursionDesired(request.getHeader().isRecursionDesired())
                 .isRecursionAvailable(false)
                 .withResponseCode((byte) (request.getHeader().getOperationCode() == 0 ? 0 : 4))
-                .withQuestionCount((short) 1)
-                .withAnswerRecordsCount((short) 1)
+                .withQuestionCount((short) questions.size())
+                .withAnswerRecordsCount((short) answers.size())
                 .build();
 
         return DnsMessage.builder()
                 .withHeader(header)
-                .withQuestion(question)
-                .withAnswer(answer)
+                .withQuestions(questions.toArray(DnsQuestion[]::new))
+                .withAnswers(answers.toArray(DnsAnswer[]::new))
                 .build();
     }
 
