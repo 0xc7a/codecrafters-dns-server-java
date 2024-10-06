@@ -3,7 +3,10 @@ package dns.util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
+import java.util.stream.IntStream;
 
 public final class Validator {
 
@@ -15,9 +18,16 @@ public final class Validator {
     public static List<String> validateDomain(String value) {
         Matcher matcher = Patterns.PATTERN_DOMAIN_NAME.get().matcher(value);
         if (!matcher.find()) {
-            throw new IllegalArgumentException("Invalid domain name.");
+            throw new IllegalArgumentException("Invalid domain name %s.".formatted(value));
         }
-        return List.of(matcher.group(1), matcher.group(2));
+        return IntStream
+                .range(1, matcher.groupCount() + 1)
+                .mapToObj(matcher::group)
+                .filter(Objects::nonNull)
+                .filter(Predicate.not(String::isBlank))
+                .map(v -> v.replace('.', ' '))
+                .map(String::strip)
+                .toList();
     }
 
     /**
