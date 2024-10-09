@@ -7,10 +7,10 @@ import dns.util.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DnsQuestion implements DnsRecord {
 
-    private final String name;
     private final List<DnsLabel> labels;
     private final DnsType dnsType;
     private final DnsClass dnsClass;
@@ -20,7 +20,6 @@ public class DnsQuestion implements DnsRecord {
         Objects.requireNonNull(builder.dnsType, "Type must not be null.");
         Objects.requireNonNull(builder.dnsClass, "Class must not be null.");
 
-        this.name = builder.name;
         if (builder.labels.isEmpty()) {
             this.labels = Validator.validateDomain(builder.name).stream().map(DnsLabel::new).toList();
         } else {
@@ -34,8 +33,8 @@ public class DnsQuestion implements DnsRecord {
         return new Builder();
     }
 
-    public String getName() {
-        return name;
+    public String getDomainName() {
+        return labels.stream().map(DnsLabel::getContent).collect(Collectors.joining("."));
     }
 
     public List<DnsLabel> getLabels() {
@@ -53,7 +52,7 @@ public class DnsQuestion implements DnsRecord {
     public static class Builder {
 
         private String name;
-        private List<DnsLabel> labels = new ArrayList<>();
+        private final List<DnsLabel> labels = new ArrayList<>();
         private DnsType dnsType;
         private DnsClass dnsClass;
 

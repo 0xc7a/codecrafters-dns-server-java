@@ -32,7 +32,7 @@ public class DnsQuestionWriter extends Writer<DnsQuestion> {
         labelsList.forEach(buffer::put);
 
         return buffer
-                .put(Environment.NULL_BYTE)
+                .put(Environment.getInstance().getNullByte())
                 .putShort(data.getDnsType().getValue())
                 .putShort(data.getDnsClass().getValue())
                 .array();

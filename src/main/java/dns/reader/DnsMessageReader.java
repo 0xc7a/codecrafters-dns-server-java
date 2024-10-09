@@ -2,35 +2,39 @@ package dns.reader;
 
 import dns.message.DnsHeader;
 import dns.message.DnsMessage;
-import dns.message.DnsQuestion;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-public class DnsMessageReader extends Reader<DnsMessage> {
+public final class DnsMessageReader {
 
-    public DnsMessageReader(ByteBuffer buffer) {
-        this.buffer = buffer;
-    }
+    public static DnsMessage read(byte[] data) {
+        ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN);
 
-    @Override
-    public DnsMessage read() {
-        DnsMessage.Builder message = DnsMessage.builder();
+        DnsMessage.Builder messageBuilder = DnsMessage.builder();
 
         int index = 0;
+        int length = DnsHeader.HEADER_SIZE_BYTES;
 
-        DnsHeaderReader headerReader = new DnsHeaderReader(buffer.slice(index, DnsHeader.HEADER_SIZE_BYTES));
-        DnsHeader header = headerReader.read();
-        message.withHeader(header);
+        DnsHeaderReader headerReader = new DnsHeaderReader(buffer.slice(index, length));
+        headerReader.messageBuilder = messageBuilder;
+        headerReader.read();
 
         index += headerReader.bufferPosition;
+        length = buffer.limit() - index;
 
-        DnsQuestionsReader questionsReader = new DnsQuestionsReader(buffer.slice(index, buffer.limit() - index), header.getQuestionCount());
-        DnsQuestion[] questions = questionsReader.read();
-        message.withQuestions(questions);
+        DnsQuestionsReader questionsReader = new DnsQuestionsReader(buffer.slice(index, length));
+        questionsReader.messageBuilder = messageBuilder;
+        questionsReader.read();
 
         index += questionsReader.bufferPosition;
+        length = buffer.limit() - index;
 
-        return message.build();
+        DnsAnswersReader answersReader = new DnsAnswersReader(buffer.slice(index, length));
+        answersReader.messageBuilder = messageBuilder;
+        answersReader.read();
+
+        return messageBuilder.build();
     }
 
 }

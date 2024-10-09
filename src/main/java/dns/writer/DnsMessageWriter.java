@@ -13,7 +13,7 @@ public class DnsMessageWriter extends Writer<DnsMessage> {
 
     @Override
     public byte[] write() {
-        ByteBuffer buffer = ByteBuffer.allocate(Environment.BUFFER_SIZE);
+        ByteBuffer buffer = ByteBuffer.allocate(Environment.getInstance().getBufferSize());
         WriterFactory.write(data.getHeader()).ifPresent(buffer::put);
         data.getQuestions().forEach(question -> WriterFactory.write(question).ifPresent(buffer::put));
         data.getAnswers().forEach(answer -> WriterFactory.write(answer).ifPresent(buffer::put));

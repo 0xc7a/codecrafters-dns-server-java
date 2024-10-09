@@ -4,6 +4,8 @@ import dns.env.DnsClass;
 import dns.env.DnsType;
 import dns.util.Validator;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,11 +27,15 @@ public class DnsAnswer implements DnsRecord {
         Objects.requireNonNull(builder.dnsClass, "Class must not be null.");
         Objects.requireNonNull(builder.data, "RData must not be null.");
 
-        this.labels = Validator.validateDomain(builder.name).stream().map(DnsLabel::new).toList();
+        if (builder.labels.isEmpty()) {
+            this.labels = Validator.validateDomain(builder.name).stream().map(DnsLabel::new).toList();
+        } else {
+            this.labels = List.copyOf(builder.labels);
+        }
         this.dnsType = builder.dnsType;
         this.dnsClass = builder.dnsClass;
         this.ttl = builder.ttl;
-        this.data = Validator.validateIPv4(builder.data);
+        this.data = builder.data;
     }
 
     public List<DnsLabel> getLabels() {
@@ -59,13 +65,24 @@ public class DnsAnswer implements DnsRecord {
     public static class Builder {
 
         private String name;
+        private final List<DnsLabel> labels = new ArrayList<>();
         private DnsType dnsType;
         private DnsClass dnsClass;
         private int ttl;
-        private String data;
+        private byte[] data;
 
         public Builder withName(String name) {
             this.name = name;
+            return this;
+        }
+
+        public Builder withLabels(DnsLabel... label) {
+            this.labels.addAll(List.of(label));
+            return this;
+        }
+
+        public Builder withLabel(DnsLabel label) {
+            this.labels.add(label);
             return this;
         }
 
@@ -84,7 +101,7 @@ public class DnsAnswer implements DnsRecord {
             return this;
         }
 
-        public Builder withData(String data) {
+        public Builder withData(byte[] data) {
             this.data = data;
             return this;
         }
@@ -101,7 +118,7 @@ public class DnsAnswer implements DnsRecord {
                 .forDnsType(DnsType.A)
                 .forDnsClass(DnsClass.IN)
                 .withTTL(42)
-                .withData("8.8.8.8")
+                .withData("8.8.8.8".getBytes(StandardCharsets.UTF_8))
                 .build();
     }
 

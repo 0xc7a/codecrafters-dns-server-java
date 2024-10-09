@@ -10,18 +10,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class DnsQuestionsReader extends Reader<DnsQuestion[]> {
+public class DnsQuestionsReader extends Reader {
 
-    private final int questionCount;
-
-    public DnsQuestionsReader(ByteBuffer buffer, int questionCount) {
+    public DnsQuestionsReader(ByteBuffer buffer) {
         this.buffer = buffer;
-        this.questionCount = questionCount;
     }
 
     @Override
-    public DnsQuestion[] read() {
+    public void read() {
         List<DnsQuestion> questions = new ArrayList<>();
+
+        final int totalQuestions = messageBuilder.getHeader().getQuestionCount();
+        if (totalQuestions == 0) {
+            return;
+        }
 
         DnsQuestion.Builder question;
         StringBuilder builder;
@@ -30,22 +32,28 @@ public class DnsQuestionsReader extends Reader<DnsQuestion[]> {
         String label;
         int labelIndex;
 
-        for (int index = 0; index < questionCount; index++) {
+        for (int index = 0; index < totalQuestions; index++) {
             question = DnsQuestion.builder();
             builder = new StringBuilder();
+
             value = buffer.get();
+
             labelIndex = buffer.arrayOffset() + buffer.position();
 
             while (value > 0) {
                 word = new byte[value];
                 buffer.get(word, 0, value);
+
                 if (!builder.isEmpty()) {
                     builder.append(".");
                 }
                 label = new String(word, StandardCharsets.UTF_8);
                 builder.append(label);
+
                 question = question.withLabel(new DnsLabel(label, labelIndex));
+
                 value = buffer.get();
+
                 labelIndex = buffer.arrayOffset() + buffer.position();
             }
 
@@ -66,6 +74,7 @@ public class DnsQuestionsReader extends Reader<DnsQuestion[]> {
                             .toArray(DnsLabel[]::new);
 
                     question = question.withLabels(labels);
+
                     builder.append(".");
                     builder.append(Arrays.stream(labels).map(DnsLabel::getContent).collect(Collectors.joining(".")));
                 }
@@ -82,9 +91,9 @@ public class DnsQuestionsReader extends Reader<DnsQuestion[]> {
             questions.add(question.build());
         }
 
-        this.bufferPosition = buffer.position();
+        bufferPosition = buffer.position();
 
-        return questions.toArray(DnsQuestion[]::new);
+        messageBuilder = messageBuilder.withQuestions(questions.toArray(DnsQuestion[]::new));
     }
 
 }

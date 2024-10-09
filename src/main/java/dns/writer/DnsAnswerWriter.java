@@ -35,7 +35,7 @@ public class DnsAnswerWriter extends Writer<DnsAnswer> {
         labelsList.forEach(buffer::put);
 
         return buffer
-                .put(Environment.NULL_BYTE)
+                .put(Environment.getInstance().getNullByte())
                 .putShort(data.getDnsType().getValue())
                 .putShort(data.getDnsClass().getValue())
                 .putInt(data.getTtl())

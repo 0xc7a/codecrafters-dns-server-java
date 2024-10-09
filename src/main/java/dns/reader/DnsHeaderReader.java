@@ -7,15 +7,16 @@ import java.nio.ByteBuffer;
 
 import static dns.message.DnsHeader.*;
 
-public class DnsHeaderReader extends Reader<DnsHeader> {
+public class DnsHeaderReader extends Reader {
 
     public DnsHeaderReader(ByteBuffer buffer) {
         this.buffer = buffer;
     }
 
     @Override
-    public DnsHeader read() {
+    public void read() {
         DnsHeader.Builder header = DnsHeader.builder();
+
         header.withIdentifier(buffer.getShort(0));
         short flags = buffer.getShort(2);
         header.withQRIndicator(readPacketIndicator(flags));
@@ -29,8 +30,10 @@ public class DnsHeaderReader extends Reader<DnsHeader> {
         header.withAnswerRecordsCount(buffer.getShort(6));
         header.withAuthorityRecordsCount(buffer.getShort(8));
         header.withAdditionalRecordsCount(buffer.getShort(10));
-        this.bufferPosition = 12;
-        return header.build();
+
+        bufferPosition = 12;
+
+        messageBuilder = messageBuilder.withHeader(header.build());
     }
 
     private DnsPacketIndicator readPacketIndicator(short flags) {

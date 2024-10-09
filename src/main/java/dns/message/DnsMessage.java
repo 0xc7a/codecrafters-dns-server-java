@@ -38,8 +38,8 @@ public class DnsMessage implements DnsRecord {
     public static class Builder {
 
         private DnsHeader header;
-        private List<DnsQuestion> questions = new ArrayList<>();
-        private List<DnsAnswer> answers = new ArrayList<>();
+        private final List<DnsQuestion> questions = new ArrayList<>();
+        private final List<DnsAnswer> answers = new ArrayList<>();
 
         public Builder withHeader(DnsHeader header) {
             this.header = header;
@@ -70,6 +70,13 @@ public class DnsMessage implements DnsRecord {
             return new DnsMessage(this);
         }
 
+        public DnsHeader getHeader() {
+            return header;
+        }
+
+        public List<DnsQuestion> getQuestions() {
+            return questions;
+        }
     }
 
     public static DnsMessage sampleDnsMessage() {

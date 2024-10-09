@@ -39,7 +39,7 @@ public class DnsHeader implements DnsRecord {
         this.isTruncated = builder.isTruncated;
         this.isRecursionDesired = builder.isRecursionDesired;
         this.isRecursionAvailable = builder.isRecursionAvailable;
-        this.responseCode = builder.responseCode;
+        this.responseCode = builder.operationCode == 0 ? (byte) 0 : (byte) 4;
         this.questionCount = builder.questionCount;
         this.answerRecordsCount = builder.answerRecordsCount;
         this.authorityRecordsCount = builder.authorityRecordsCount;
