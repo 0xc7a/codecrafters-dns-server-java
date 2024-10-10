@@ -11,6 +11,7 @@ import dns.util.Pair;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -22,8 +23,8 @@ public record DnsForwarder(DnsMessage request) {
         Objects.requireNonNull(request, "Request must not be null.");
     }
 
-    public DnsMessage forward() throws IOException {
-        List<DnsAnswer> answers = request.getQuestions().stream()
+    public DnsMessage forward() {
+        List<CompletableFuture<DnsMessage>> fwdTasks = request.getQuestions().stream()
                 .map(question -> DnsMessage.builder()
                         .withHeader(DnsHeader.builder()
                                 .withIdentifier(request.getHeader().getIdentifier())
@@ -34,11 +35,19 @@ public record DnsForwarder(DnsMessage request) {
                                 .build())
                         .withQuestion(question)
                         .build())
-                .map(message -> CompletableFuture.supplyAsync(forwardDnsMessage(message)))
-                .map(CompletableFuture::join)
-                .map(DnsMessage::getAnswers)
-                .flatMap(List::stream)
+                .map(this::forwardDnsMessage)
+                .map(CompletableFuture::supplyAsync)
                 .toList();
+
+        List<DnsAnswer> answers = CompletableFuture.allOf(fwdTasks.toArray(CompletableFuture[]::new))
+                .thenApply(_ ->
+                        fwdTasks.stream()
+                                .map(CompletableFuture::join)
+                                .map(DnsMessage::getAnswers)
+                                .flatMap(Collection::stream)
+                                .toList()
+                )
+                .join();
 
         return DnsMessage.builder()
                 .withHeader(DnsHeader.builder()
