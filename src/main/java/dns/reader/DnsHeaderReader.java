@@ -2,6 +2,7 @@ package dns.reader;
 
 import dns.env.DnsPacketIndicator;
 import dns.message.DnsHeader;
+import dns.message.DnsMessage;
 
 import java.nio.ByteBuffer;
 
@@ -9,12 +10,13 @@ import static dns.message.DnsHeader.*;
 
 public class DnsHeaderReader extends Reader {
 
-    public DnsHeaderReader(ByteBuffer buffer) {
+    public DnsHeaderReader(ByteBuffer buffer, DnsMessage.Builder messageBuilder) {
         this.buffer = buffer;
+        this.messageBuilder = messageBuilder;
     }
 
     @Override
-    public void read() {
+    public int read() {
         DnsHeader.Builder header = DnsHeader.builder();
 
         header.withIdentifier(buffer.getShort(0));
@@ -31,9 +33,9 @@ public class DnsHeaderReader extends Reader {
         header.withAuthorityRecordsCount(buffer.getShort(8));
         header.withAdditionalRecordsCount(buffer.getShort(10));
 
-        bufferPosition = 12;
-
         messageBuilder = messageBuilder.withHeader(header.build());
+
+        return 12;
     }
 
     private DnsPacketIndicator readPacketIndicator(short flags) {

@@ -4,6 +4,7 @@ import dns.env.DnsClass;
 import dns.env.DnsType;
 import dns.message.DnsAnswer;
 import dns.message.DnsLabel;
+import dns.message.DnsMessage;
 import dns.message.DnsQuestion;
 
 import java.nio.ByteBuffer;
@@ -13,17 +14,18 @@ import java.util.stream.Collectors;
 
 public class DnsAnswersReader extends Reader {
 
-    public DnsAnswersReader(ByteBuffer buffer) {
+    public DnsAnswersReader(ByteBuffer buffer, DnsMessage.Builder messageBuilder) {
         this.buffer = buffer;
+        this.messageBuilder = messageBuilder;
     }
 
     @Override
-    public void read() {
+    public int read() {
         List<DnsAnswer> answers = new ArrayList<>();
 
         final int totalAnswers = messageBuilder.getHeader().getAnswerRecordsCount();
         if (totalAnswers == 0) {
-            return;
+            return buffer.position();
         }
 
         DnsAnswer.Builder answer;
@@ -68,30 +70,29 @@ public class DnsAnswersReader extends Reader {
                 builder.append(labels.stream().map(DnsLabel::getContent).collect(Collectors.joining(".")));
             }
 
+            answer = answer.withName(builder.toString());
+
             DnsType dnsType = DnsType.findDnsType(buffer.getShort()).orElse(null);
+            answer = answer.forDnsType(dnsType);
 
             DnsClass dnsClass = DnsClass.findDnsClass(buffer.getShort()).orElse(null);
+            answer = answer.forDnsClass(dnsClass);
 
             int ttl = buffer.getInt();
+            answer = answer.withTTL(ttl);
 
             short _ = buffer.getShort();
 
             word = new byte[4];
             buffer.get(word, 0, 4);
-
-            answer = answer
-                    .withName(builder.toString())
-                    .forDnsType(dnsType)
-                    .forDnsClass(dnsClass)
-                    .withTTL(ttl)
-                    .withData(word);
+            answer = answer.withData(word);
 
             answers.add(answer.build());
         }
 
-        bufferPosition = buffer.position();
-
         messageBuilder = messageBuilder.withAnswers(answers.toArray(DnsAnswer[]::new));
+
+        return buffer.position();
     }
 
 }

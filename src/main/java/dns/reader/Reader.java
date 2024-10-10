@@ -10,8 +10,6 @@ public abstract class Reader {
 
     protected DnsMessage.Builder messageBuilder;
 
-    protected int bufferPosition;
-
-    public abstract void read();
+    public abstract int read();
 
 }

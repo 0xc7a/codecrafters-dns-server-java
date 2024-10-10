@@ -3,6 +3,7 @@ package dns.reader;
 import dns.env.DnsClass;
 import dns.env.DnsType;
 import dns.message.DnsLabel;
+import dns.message.DnsMessage;
 import dns.message.DnsQuestion;
 
 import java.nio.ByteBuffer;
@@ -12,17 +13,18 @@ import java.util.stream.Collectors;
 
 public class DnsQuestionsReader extends Reader {
 
-    public DnsQuestionsReader(ByteBuffer buffer) {
+    public DnsQuestionsReader(ByteBuffer buffer, DnsMessage.Builder messageBuilder) {
         this.buffer = buffer;
+        this.messageBuilder = messageBuilder;
     }
 
     @Override
-    public void read() {
+    public int read() {
         List<DnsQuestion> questions = new ArrayList<>();
 
         final int totalQuestions = messageBuilder.getHeader().getQuestionCount();
         if (totalQuestions == 0) {
-            return;
+            return buffer.position();
         }
 
         DnsQuestion.Builder question;
@@ -91,9 +93,9 @@ public class DnsQuestionsReader extends Reader {
             questions.add(question.build());
         }
 
-        bufferPosition = buffer.position();
-
         messageBuilder = messageBuilder.withQuestions(questions.toArray(DnsQuestion[]::new));
+
+        return buffer.position();
     }
 
 }
