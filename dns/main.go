@@ -39,7 +39,7 @@ func sendRequest(client *dns.Client, request *dns.Msg) (*dns.Msg, error) {
 	}
 
 	if len(reply.Answer) != len(request.Question) {
-		return nil, fmt.Errorf("#answers != #questions. Expected %d, received %d", len(reply.Answer), len(request.Question))
+		return nil, fmt.Errorf("#answers != #questions. Received %d, expected %d", len(reply.Answer), len(request.Question))
 	}
 
 	return reply, nil
